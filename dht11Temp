@@ -1,0 +1,51 @@
+#source https://roboticadiy.com/raspberry-pi-4-data-logger-dht11-dht22-sensor-data-logger/
+#Accessed 5/4/2021 running in Python 2.7.16
+
+#note for myself: if writing to CSV to you need to 'import csv'?
+#another note: can the 'dht11' or 'dht22' library be used instead of Adafruit_DHT (which is deprecated)
+import RPi.GPIO as GPIO
+import dht11
+import time
+
+# initialize GPIO
+#GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+#GPIO.cleanup() 
+
+file = open('zeroTempTestReadings.txt', 'a')
+file.write('time and date, temp1 (C), temp1 (F), humidity1, temp2 (C), temp2 (F) humidity2\n')
+
+running = True
+#can't just say 'while True' below because the loop needs to stop before the written-to
+#file is closed (i think if you could also move the 'close' back one scope)
+while running:
+    try:
+    
+        sensor1 = dht11.DHT11(pin = 14)
+        sensor2 = dht11.DHT11(pin = 2)
+        results1 = sensor1.read()
+        results2 = sensor2.read()
+
+        temperature1_f = results1.temperature * 9/5.0 + 32
+        temperature2_f = results2.temperature * 9/5.0 + 32
+
+        if results1.humidity is not None and results1.temperature is not None:
+
+            #print temperature and humidity1
+            #print('Temperature1 = ' + str(temperature1) +','+ 'Temperature1 Fahrenheit = ' + str(temperature1_f) +',' + 'Humidity1 = ' + str(humidity1))
+            print('Temp1 C = ' + str(results1.temperature) +','+ 'Temp1 F = ' + str(temperature1_f) +',' + 'Humidity1 = ' + str(results1.humidity))
+            print('Temp2 C = ' + str(results2.temperature) +','+ 'Temp2 F = ' + str(temperature2_f) +',' + 'Humidity2 = ' + str(results2.humidity))
+
+            #save time, date, temperature in Celsius, temperature in Fahrenheit and humidity in .txt file
+            file.write(time.strftime('%H:%M:%S %d/%m/%Y') + ', ' + str(results1.temperature) + ', '+ str(temperature1_f)+', ' + str(results1.humidity) + ', ' + str(results2.temperature) + ', '+ str(temperature2_f)+', ' + str(results2.humidity) + '\n')
+            time.sleep(5)
+
+        else:
+            print('Failed to get reading. Try again!')
+            time.sleep(5)
+
+    except KeyboardInterrupt:
+        print ('Program stopped')
+        running = False
+        file.close()
+ 
